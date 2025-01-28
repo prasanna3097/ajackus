@@ -8,7 +8,7 @@ const UserForm = ({ onSaveUser }) => {
 
   useEffect(() => {
     if (id) {
-      // Fetch user details for editing
+      // Fetching user details for editing
       fetch(`https://jsonplaceholder.typicode.com/users/${id}`)
         .then((response) => response.json())
         .then((data) => setFormData(data))

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import UserList from "./components/UserList";
 import UserForm from "./components/UserForm";
+import ErrorBoundary from "./components/ErrorBoundary";
 import axios from "axios";
 
 const App = () => {
@@ -16,7 +17,6 @@ const App = () => {
 
   const handleSaveUser = (user) => {
     if (user.id) {
-      // Update existing user
       axios
         .put(`https://jsonplaceholder.typicode.com/users/${user.id}`, user)
         .then(() => {
@@ -26,7 +26,6 @@ const App = () => {
         })
         .catch((err) => console.error("Failed to update user:", err));
     } else {
-      // Add new user
       axios
         .post("https://jsonplaceholder.typicode.com/users", user)
         .then((response) => {
@@ -50,17 +49,25 @@ const App = () => {
 
   return (
     <Router>
-      <Routes>
-        <Route
-          path="/"
-          element={<UserList users={users} onDelete={handleDeleteUser} />}
-        />
-        <Route path="/add" element={<UserForm onSaveUser={handleSaveUser} />} />
-        <Route
-          path="/edit/:id"
-          element={<UserForm onSaveUser={handleSaveUser} />}
-        />
-      </Routes>
+      <div className="container">
+        <h1>User Management</h1>
+        <ErrorBoundary>
+          <Routes>
+            <Route
+              path="/"
+              element={<UserList users={users} onDelete={handleDeleteUser} />}
+            />
+            <Route
+              path="/add"
+              element={<UserForm onSaveUser={handleSaveUser} />}
+            />
+            <Route
+              path="/edit/:id"
+              element={<UserForm onSaveUser={handleSaveUser} />}
+            />
+          </Routes>
+        </ErrorBoundary>
+      </div>
     </Router>
   );
 };
