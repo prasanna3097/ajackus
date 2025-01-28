@@ -1,89 +1,67 @@
 import React, { useState, useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import UserList from "./components/UserList";
 import UserForm from "./components/UserForm";
-import ErrorBoundary from "./components/ErrorBoundary";
 import axios from "axios";
 
 const App = () => {
-  const [users, setUsers] = useState([]); // List of users
-  const [selectedUser, setSelectedUser] = useState(null); // Currently edited user
-  const [error, setError] = useState(null); // Error handling
+  const [users, setUsers] = useState([]);
 
-  // Fetch users on component mount
   useEffect(() => {
     axios
       .get("https://jsonplaceholder.typicode.com/users")
       .then((response) => setUsers(response.data))
-      .catch(() => setError("Failed to fetch users"));
+      .catch((err) => console.error("Failed to fetch users:", err));
   }, []);
 
-  // Save a user (add or update)
   const handleSaveUser = (user) => {
     if (user.id) {
       // Update existing user
       axios
         .put(`https://jsonplaceholder.typicode.com/users/${user.id}`, user)
-        .then((response) => {
-          const updatedUsers = users.map((u) =>
-            u.id === response.data.id ? response.data : u
+        .then(() => {
+          setUsers((prevUsers) =>
+            prevUsers.map((u) => (u.id === user.id ? user : u))
           );
-          setUsers(updatedUsers);
-          setSelectedUser(null);
         })
-        .catch(() => setError("Failed to update user"));
+        .catch((err) => console.error("Failed to update user:", err));
     } else {
       // Add new user
       axios
         .post("https://jsonplaceholder.typicode.com/users", user)
         .then((response) => {
-          setUsers([...users, { ...response.data, id: users.length + 1 }]); // Append user with mock ID
-          setSelectedUser(null);
+          setUsers((prevUsers) => [
+            ...prevUsers,
+            { ...user, id: response.data.id },
+          ]);
         })
-        .catch(() => setError("Failed to add user"));
+        .catch((err) => console.error("Failed to add user:", err));
     }
   };
 
-  // Delete a user
   const handleDeleteUser = (id) => {
     axios
       .delete(`https://jsonplaceholder.typicode.com/users/${id}`)
       .then(() => {
-        const updatedUsers = users.filter((user) => user.id !== id);
-        setUsers(updatedUsers);
+        setUsers((prevUsers) => prevUsers.filter((user) => user.id !== id));
       })
-      .catch(() => setError("Failed to delete user"));
+      .catch((err) => console.error("Failed to delete user:", err));
   };
 
   return (
-    <ErrorBoundary>
-      <div className="container mt-4">
-        <h1 className="text-center mb-4">User Management</h1>
-        <div className="card shadow p-4">
-          <UserList
-            users={users}
-            onEdit={setSelectedUser}
-            onDelete={handleDeleteUser}
-          />
-          <button
-            onClick={() => setSelectedUser({})}
-            className="btn btn-primary mt-3"
-          >
-            Add User
-          </button>
-          {selectedUser && (
-            <div className="mt-4">
-              <h3>{selectedUser.id ? "Edit User" : "Add User"}</h3>
-              <UserForm
-                user={selectedUser}
-                onSave={handleSaveUser}
-                onCancel={() => setSelectedUser(null)}
-              />
-            </div>
-          )}
-          {error && <div className="alert alert-danger mt-3">{error}</div>}
-        </div>
-      </div>
-    </ErrorBoundary>
+    <Router>
+      <Routes>
+        <Route
+          path="/"
+          element={<UserList users={users} onDelete={handleDeleteUser} />}
+        />
+        <Route path="/add" element={<UserForm onSaveUser={handleSaveUser} />} />
+        <Route
+          path="/edit/:id"
+          element={<UserForm onSaveUser={handleSaveUser} />}
+        />
+      </Routes>
+    </Router>
   );
 };
 

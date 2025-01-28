@@ -1,12 +1,20 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import { useParams, useNavigate } from "react-router-dom";
 
-const UserForm = ({ user, onSave, onCancel }) => {
-  const [formData, setFormData] = useState(user);
+const UserForm = ({ onSaveUser }) => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({ name: "", email: "" });
 
   useEffect(() => {
-    setFormData(user);
-  }, [user]);
+    if (id) {
+      // Fetch user details for editing
+      fetch(`https://jsonplaceholder.typicode.com/users/${id}`)
+        .then((response) => response.json())
+        .then((data) => setFormData(data))
+        .catch((err) => console.error("Failed to fetch user:", err));
+    }
+  }, [id]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -15,61 +23,54 @@ const UserForm = ({ user, onSave, onCancel }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    // Ensure formData has the required properties
-    const { name, email } = formData;
-
-    // Make the POST request using axios
-    axios
-      .post("https://jsonplaceholder.typicode.com/users", {
-        name,
-        email,
-      })
-      .then((response) => {
-        console.log("User saved successfully:", response.data);
-        onSave(response.data); // Pass the response data to the parent
-      })
-      .catch((error) => {
-        console.error("Error saving user:", error);
-        alert("Failed to save user. Please try again.");
-      });
+    onSaveUser(formData);
+    navigate("/");
   };
 
   return (
-    <form onSubmit={handleSubmit} className="mt-4">
-      <div className="form-group">
-        <label htmlFor="name">Name</label>
-        <input
-          type="text"
-          name="name"
-          id="name"
-          className="form-control"
-          value={formData.name || ""}
-          onChange={handleChange}
-          required
-        />
-      </div>
-      <div className="form-group">
-        <label htmlFor="email">Email</label>
-        <input
-          type="email"
-          name="email"
-          id="email"
-          className="form-control"
-          value={formData.email || ""}
-          onChange={handleChange}
-          required
-        />
-      </div>
-      <div className="d-flex justify-content-between">
+    <div>
+      <h2>{id ? "Edit User" : "Add User"}</h2>
+      <form onSubmit={handleSubmit}>
+        <div className="mb-3">
+          <label htmlFor="name" className="form-label">
+            Name
+          </label>
+          <input
+            type="text"
+            name="name"
+            id="name"
+            className="form-control"
+            value={formData.name}
+            onChange={handleChange}
+            required
+          />
+        </div>
+        <div className="mb-3">
+          <label htmlFor="email" className="form-label">
+            Email
+          </label>
+          <input
+            type="email"
+            name="email"
+            id="email"
+            className="form-control"
+            value={formData.email}
+            onChange={handleChange}
+            required
+          />
+        </div>
         <button type="submit" className="btn btn-success">
           Save
         </button>
-        <button type="button" onClick={onCancel} className="btn btn-secondary">
+        <button
+          type="button"
+          onClick={() => navigate("/")}
+          className="btn btn-secondary ms-2"
+        >
           Cancel
         </button>
-      </div>
-    </form>
+      </form>
+    </div>
   );
 };
 
